@@ -1,0 +1,6 @@
+project(bwinf C)
+cmake_minimum_required(VERSION 3.17)
+set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
+set_property(GLOBAL PROPERTY C_STANDARD 99)
+add_subdirectory("lib/acl")
+add_subdirectory("j1-Passwoerter")
