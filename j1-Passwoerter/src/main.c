@@ -16,9 +16,11 @@ void pointerCheck(void *pointer) {
 	}
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+	if(argc != 2) printf("file argument required");
 	bool sucess;
-	char *woerterText = acl_ReadTextFile("wörter.txt", &sucess);
+	FILE *fp = fopen(argv[1], "rb");
+	char *woerterText = acl_ReadTextFile(fp, &sucess);
 	if(!sucess) perror("Error: ");
 	unsigned len = strlen(woerterText);
 	uintptr_t dest = (uintptr_t)woerterText + len;
