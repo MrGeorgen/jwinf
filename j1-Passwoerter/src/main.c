@@ -19,7 +19,7 @@ void pointerCheck(void *pointer) {
 int main(int argc, char *argv[]) {
 	if(argc != 2) printf("file argument required");
 	bool sucess;
-	FILE *fp = fopen(argv[1], "rb");
+	FILE *fp = fopen(argv[1], "rb"); // im binären Modus zu lesen ist deutlich schneller als im Textmodus, da man dort jede Zeile einzeln lesen muss. So wurde aus mehreren Sekunden Wartezeit keine bemerkbare Verzögerung.
 	char *woerterText = acl_ReadTextFile(fp, &sucess);
 	if(!sucess) perror("Error: ");
 	unsigned len = strlen(woerterText);
@@ -30,9 +30,10 @@ int main(int argc, char *argv[]) {
 	for(char *i = woerterText; (uintptr_t)i < dest; ++i) {
 		if(*i == '\n') {
 			char *nextWord = i + 1;
-			woerter = acl_arraylist_append(woerter, &nextWord);
+			woerter = acl_arraylist_append(woerter, &nextWord); // Pointer werden zu Begin jedes Wortes erstellt.
 			pointerCheck(woerter);
-			*i = '\0';
+			*i = '\0'; // \n wird mit \0 ersetzt um das Ende des Strings markieren.
+			// diesen Weg habe ich gewählt um viele memory allocations zu vermeiden.
 		}
 	}
 	FILE *randomFile = fopen("/dev/random", "rb");
@@ -41,7 +42,7 @@ int main(int argc, char *argv[]) {
 	size_t passLen = wordsForPass_len + 1; // weil Ziffern im Passwort gleich oft vorkommen wie Wörter. + 1 für ein Satzzeichen am Ende
 	char *wordsForPass[wordsForPass_len];
 	for(uint32_t i = 0; i < wordsForPass_len; ++i) {
-		wordsForPass[i] = woerter[randomInt[i] % acl_arraylist_len(woerter)];
+		wordsForPass[i] = woerter[randomInt[i] % acl_arraylist_len(woerter)]; // der modulo operator wird verwendet um die Zahlfallszahl auf den gewünschten Zahlenbereich zu reduzieren.
 		passLen += strlen(wordsForPass[i]);
 	}
 	char *password = malloc(passLen + 1);
