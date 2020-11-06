@@ -1,3 +1,13 @@
+/* Die Grundidee für meinen Passwortgenrator ist richtigen Wörtern zu bilden.
+ * Als erstes Argument muss man den Programm einen Dateipfad zu der Textdatei mit Liste von Wörtern, die mit \n getrennt sind.
+ * Unter wörter.txt ist ein Beispiel dafür. Quelle: https://www.netzmafia.de/software/wordlists/deutsch.txt
+ * Das Passwort wird zu stdout ausgegeben.
+ *
+ * Regeln für das generierte Passwort:
+ * 1. zufäfflige Wörter werden aus der Wörterliste ausgewählt.
+ * 2. Am Anfang des Passworts und zwischen den Wörtern steht eine Ziffer.
+ * 3. Am Ende steht ein Satzzeichen.
+ */
 #include <stdio.h>
 #include <acl/file.h>
 #include <string.h>
@@ -22,6 +32,7 @@ int main(int argc, char *argv[]) {
 	FILE *fp = fopen(argv[1], "rb"); // im binären Modus zu lesen ist deutlich schneller als im Textmodus, da man dort jede Zeile einzeln lesen muss. So wurde aus mehreren Sekunden Wartezeit keine bemerkbare Verzögerung.
 	char *woerterText = acl_ReadTextFile(fp, &sucess);
 	if(!sucess) perror("Error: ");
+	fclose(fp);
 	unsigned len = strlen(woerterText);
 	uintptr_t dest = (uintptr_t)woerterText + len;
 	char **woerter = acl_arraylist_create(1, sizeof *woerter);
