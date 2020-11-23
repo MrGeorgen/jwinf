@@ -66,3 +66,7 @@ CTestTestfile.cmake
 _deps
 # ---> Extra
 .clangd
+/j1-Passwoerter/j1
+/j2-Baulwuerfe/j2
+/a1-Woerter-aufraeumen/a1
+/template.tex
