@@ -5,17 +5,18 @@
 #include <stdint.h>
 #include <acl/file.h>
 
-enum baulwurfhuegel{baulwurfhuegel = 'X', keinBaulwurfhuegel = ' '};
+enum baulwurfhuegel{baulwurfhuegel = 'X', keinBaulwurfhuegel = ' '}; // enums um die Lesbarkeit zu verbessern.
 
 int width, height;
 
-void pointerCheck(void *pointer) {
+void pointerCheck(void *pointer) {// Funktion um auf NULL Pointer zu checken und den Fehler auszugeben.
 	if(pointer == NULL) {
 		perror("Error: ");
 		exit(-1);
 	}
 }
 
+// Funktion die überprüft ob relativ zur angegebenen Position eine Spalte mit 4 Maulwurfhügel ist.
 bool checkRow(char *row) {
 	for(uint8_t i = 0; i < 4; ++i) {
 		if(row[i * (width + 1)] == keinBaulwurfhuegel) return false;
@@ -24,25 +25,29 @@ bool checkRow(char *row) {
 }
 
 int main(int argc, char *argv[]) {
-	if(argc != 2) printf("file argument required");
-	bool sucess;
-	FILE *fp = fopen(argv[1], "rb");
-	char *input = acl_ReadTextFile(fp, &sucess);
-	fclose(fp);
-	pointerCheck(input);
-	char *heightText;
-	char *textRest;
-	width = strtol(input, &heightText, 10);
-	++heightText; // height points does not point to \n anymore
-	height = strtol(heightText, &textRest, 10);
-	++textRest;
-	printf("height: %d width: %d\n", height, width);
-	unsigned baulwurfhuegelCounter = 0;
-	for(char *i = textRest; (uintptr_t)i <= (uintptr_t)textRest + ((height - 4) * (width + 1)); i += width + 1) {
-		for(char *j = i; (uintptr_t)j < (uintptr_t)i + width - 1; ++j) {
-			baulwurfhuegelCounter += checkRow(j) && checkRow(j + 2) && j[1] == baulwurfhuegel && j[1 + 3 * (width + 1)];
-		}
+	if(argc == 1) { // das Programm wird beendet wenn die Anzahl der Argumente falsch ist.
+		printf("file argument required");
+		exit(-1);
 	}
-	free(input);
-	printf("Baulwurfhuegel: %u", baulwurfhuegelCounter);
+	for(int filePath = 1; filePath < argc; ++filePath) {
+		bool sucess;
+		FILE *fp = fopen(argv[filePath], "rb"); // Datei wird im binären Modus geöffent, um die Geschwindigkeit zu verbessern.
+		char *input = acl_ReadTextFile(fp, &sucess);
+		fclose(fp);
+		pointerCheck(input);
+		char *heightText;
+		char *textRest;
+		width = strtol(input, &heightText, 10);
+		++heightText; // Das nächste Zeichen nach der Breite ist \n. Danach das Zeichen ist erst die Höhe.
+		height = strtol(heightText, &textRest, 10); // Der Rest der Textdatei ist die Karte mit den Maulwurfhügeln.
+		++textRest; // wieder damit der Pointer auf \n zeigt
+		unsigned baulwurfhuegelCounter = 0;
+		for(char *i = textRest; (uintptr_t)i <= (uintptr_t)textRest + ((height - 4) * (width + 1)); i += width + 1) { // iteriert über die Zeilen der Karte.
+			for(char *j = i; (uintptr_t)j < (uintptr_t)i + width - 1; ++j) { // iteriert immer ein Schritt nach rechts.
+				baulwurfhuegelCounter += checkRow(j) && checkRow(j + 2) /* überprüft ob sich die beiden 4er Zeilen der Baulwurfhügelformation stimmen */ && j[1] == baulwurfhuegel && j[1 + 3 * (width + 1)] == baulwurfhuegel /* überprüft die Maulwurfhügel oben und unten in der Mitte da sind */ && j[1 + 2 * (width +1)] == keinBaulwurfhuegel && j[1 + (width + 1)] == keinBaulwurfhuegel; // überprüft ob in der Mitte keine Maulwurfhügel sind
+			}
+		}
+		free(input);
+		printf("%s: %u\n", argv[filePath], baulwurfhuegelCounter); // gibt den Dateipfad und die Anzahl der Baulwürfe aus
+	}
 }
