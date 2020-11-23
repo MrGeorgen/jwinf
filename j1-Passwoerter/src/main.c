@@ -1,13 +1,3 @@
-/* Die Grundidee für meinen Passwortgenrator ist richtigen Wörtern zu bilden.
- * Als erstes Argument muss man den Programm einen Dateipfad zu der Textdatei mit Liste von Wörtern, die mit \n getrennt sind.
- * Unter wörter.txt ist ein Beispiel dafür. Quelle: https://www.netzmafia.de/software/wordlists/deutsch.txt
- * Das Passwort wird zu stdout ausgegeben.
- *
- * Regeln für das generierte Passwort:
- * 1. zufäfflige Wörter werden aus der Wörterliste ausgewählt.
- * 2. Am Anfang des Passworts und zwischen den Wörtern steht eine Ziffer.
- * 3. Am Ende steht ein Satzzeichen.
- */
 #include <stdio.h>
 #include <acl/file.h>
 #include <string.h>
@@ -19,7 +9,7 @@
 #define wordCount 3 // Anzahl der Wörter des Passworts
 #define randomInt_len (2 * wordCount)
 #define wordsForPass_len randomInt_len / 2
-void pointerCheck(void *pointer) {
+void pointerCheck(void *pointer) { // Funktion um auf NULL Pointer zu checken und den Fehler auszugeben.
 	if(pointer == NULL) {
 		perror("Error: ");
 		exit(-1);
@@ -27,33 +17,45 @@ void pointerCheck(void *pointer) {
 }
 
 int main(int argc, char *argv[]) {
-	if(argc != 2) printf("file argument required");
+	if(argc != 2) {
+		printf("file argument required"); // checkt ob der Nutzer die richtige Anzahl von Argumenten verwendet hat.
+		exit(-1);
+	}
 	bool sucess;
-	FILE *fp = fopen(argv[1], "rb"); // im binären Modus zu lesen ist deutlich schneller als im Textmodus, da man dort jede Zeile einzeln lesen muss. So wurde aus mehreren Sekunden Wartezeit keine bemerkbare Verzögerung.
+
+	/* im binären Modus zu lesen ist deutlich schneller als im Textmodus, da man dort jede Zeile einzeln lesen muss.
+	 * So wurde aus mehreren Sekunden Wartezeit eine nicht bemerkbare Verzögerung. */
+	FILE *fp = fopen(argv[1], "rb"); 
 	char *woerterText = acl_ReadTextFile(fp, &sucess);
 	if(!sucess) perror("Error: ");
 	fclose(fp);
 	unsigned len = strlen(woerterText);
 	uintptr_t dest = (uintptr_t)woerterText + len;
-	char **woerter = acl_arraylist_create(1, sizeof *woerter);
+
+	/* erstellt ein Array für die Pointer zu den Wörtern.
+	 * Man könnte auch erst die Zeilenumbrüche zählen, um den Arbeitsspeicher auf einmal anzufragen.
+	 * Dies würde das Programm vermutlich etwas schneller machen.
+	 * Jedoch ist das Programm so einfacher zu verstehen und im Vergleich zum Auslesen der Textdatei wäre die Geschwindigkeitsverbesserung sehr gering. */
+	char **woerter = acl_arraylist_create(1, sizeof *woerter); 
 	pointerCheck(woerter);
 	woerter[0] = woerterText;
 	for(char *i = woerterText; (uintptr_t)i < dest; ++i) {
 		if(*i == '\n') {
 			char *nextWord = i + 1;
-			woerter = acl_arraylist_append(woerter, &nextWord); // Pointer werden zu Begin jedes Wortes erstellt.
+			woerter = acl_arraylist_append(woerter, &nextWord); // Pointer werden am Anfang jedes Wortes erstellt.
 			pointerCheck(woerter);
-			*i = '\0'; // \n wird mit \0 ersetzt um das Ende des Strings markieren.
+			*i = '\0'; // \n wird durch \0 ersetzt um das Ende des Strings markieren.
 			// diesen Weg habe ich gewählt um viele memory allocations zu vermeiden.
 		}
 	}
-	FILE *randomFile = fopen("/dev/random", "rb");
+	FILE *randomFile = fopen("/dev/random", "rb"); // /dev/random ist ein kryptografisch sicherer Zufallszahlengenerator.
 	uint32_t randomInt[randomInt_len];
 	fread(randomInt, sizeof *randomInt, randomInt_len, randomFile);
 	size_t passLen = wordsForPass_len + 1; // weil Ziffern im Passwort gleich oft vorkommen wie Wörter. + 1 für ein Satzzeichen am Ende
 	char *wordsForPass[wordsForPass_len];
+	// Die Länge des Passwortes wird berechnet.
 	for(uint32_t i = 0; i < wordsForPass_len; ++i) {
-		wordsForPass[i] = woerter[randomInt[i] % acl_arraylist_len(woerter)]; // der modulo operator wird verwendet um die Zahlfallszahl auf den gewünschten Zahlenbereich zu reduzieren.
+		wordsForPass[i] = woerter[randomInt[i] % acl_arraylist_len(woerter)]; // der modulo Operator wird verwendet um die Zufallszahl auf den gewünschten Zahlenbereich zu reduzieren.
 		passLen += strlen(wordsForPass[i]);
 	}
 	char *password = malloc(passLen + 1);
@@ -66,7 +68,9 @@ int main(int argc, char *argv[]) {
 		strcat(password, buf);
 		strcat(password, wordsForPass[j]);
 	}
+	free(woerterText);
+	// ein zufälliges Sonderzeichen wird angehängt.
 	const char specialCharacter[] = {'?', '.', ',', '!', ';'};
 	char randomSpecialCharacter[] = {specialCharacter[randomInt[randomInt_len - 1] % (sizeof specialCharacter - 1)], '\0'};
-	printf("%s", strcat(password, randomSpecialCharacter));
+	printf("%s\n", strcat(password, randomSpecialCharacter));
 }
