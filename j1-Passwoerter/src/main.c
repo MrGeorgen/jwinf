@@ -18,7 +18,7 @@ void pointerCheck(void *pointer) { // Funktion um auf NULL Pointer zu checken un
 
 int main(int argc, char *argv[]) {
 	if(argc != 2) {
-		printf("file argument required"); // checkt ob der Nutzer die richtige Anzahl von Argumenten verwendet hat.
+		fprintf(stderr, "file argument required\n"); // checkt ob der Nutzer die richtige Anzahl von Argumenten verwendet hat.
 		exit(-1);
 	}
 	bool sucess;

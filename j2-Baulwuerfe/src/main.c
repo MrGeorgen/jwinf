@@ -26,7 +26,7 @@ bool checkRow(char *row) {
 
 int main(int argc, char *argv[]) {
 	if(argc == 1) { // das Programm wird beendet wenn die Anzahl der Argumente falsch ist.
-		printf("file argument required");
+		fprintf(stderr, "file argument required\n");
 		exit(-1);
 	}
 	for(int filePath = 1; filePath < argc; ++filePath) {
